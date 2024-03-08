@@ -4,6 +4,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 from datetime import date, datetime
 import os
+import re
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 from sklearn.neighbors import KNeighborsClassifier
@@ -14,6 +15,37 @@ from sklearn.metrics import confusion_matrix
 import yfinance as yf
 from scipy.signal import argrelextrema
 from collections import defaultdict
+import bs4 as bs    
+import pickle    
+import requests    
+import lxml
+
+def save_sp500_tickers():
+    resp = requests.get('https://en.wikipedia.org/wiki/List_of_S%26P_500_companies')        
+    soup = bs.BeautifulSoup(resp.text,'lxml')        
+    table = soup.find('table', {'class': 'wikitable sortable'})        
+
+    tickers = []
+
+    for row in table.findAll('tr')[1:]:
+        ticker = row.findAll('td')[0].text
+        tickers.append(ticker)
+
+    with open("sp500tickers.pickle", "wb") as f:
+        pickle.dump(tickers, f)
+    
+    tickers = [re.sub('\n','',x) for x in tickers]
+
+    return tickers    
+
+def get_ticker(ticker,days):
+    my_ticker = yf.Ticker(ticker)
+    df = my_ticker.history(period="{}d".format(days), interval = "1h")
+    df = df.reset_index()
+    df['date'] = df.Datetime.dt.tz_localize(None)
+    df.columns = [x.lower() for x in df.columns]
+    
+    return df
 
 def get_sma(df,SMAs):
     sma = df.copy()
@@ -86,28 +118,29 @@ def find_FW(max_min,buffer):
         
         m = (e-a)/4
         x1 = i-5
-        b = a - x1*m
+        intercept = a - x1*m
         def lower_line(x):
-            y = m*x+b
+            y = m*x+intercept
             
             return y
             
         m = (d-b)/2
         x1 = i-3
-        b = a - x1*m
+        intercept = a - x1*m
         def upper_line(x):
-            y = m*x+b
+            y = m*x+intercept
             
             return y
                 
         # FW
-        c1 = lower_line(c)
-        e1 = lower_line(e)
-        d1 = upper_line(d)
-        if (a<b and c<a and a<d and d<b and e<d and e<c and
+        c1 = lower_line(i-3)
+        e1 = lower_line(i)
+        d1 = upper_line(i-1)
+        if (c<a and a<d and d<b and e<d and e<c
         #if (a<b and c<a and c<d and d<b and e<d and e<c and f<d and g<d and
             #abs(c1-c)<=np.mean([c1,c])*buffer and abs(e1-e)<=np.mean([e1,e])*buffer and
-            abs(d1-d)<=np.mean([d1,d])*buffer):
+            #and abs(d1-d)<=np.mean([d1,d])*buffer
+           ):
                patterns['FW'].append((window.index[0], window.index[-1]))
         
     final = pd.DataFrame()
