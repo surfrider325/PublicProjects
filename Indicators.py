@@ -101,6 +101,8 @@ def find_IHS(max_min):
         inv_max = list(max_min[max_min.index==y]['date'])[0]
         final = pd.concat([final,pd.DataFrame({'start_event':[inv_min],'end_event':[inv_max]})])
         
+    final['event'] = 'IHS'
+        
     return final
 
 def find_FW(max_min,buffer):  
@@ -136,10 +138,10 @@ def find_FW(max_min,buffer):
         c1 = lower_line(i-3)
         e1 = lower_line(i)
         d1 = upper_line(i-1)
-        if (c<a and a<d and d<b and e<d and e<c
+        if (c<a and a<b and d<b and c<d and e<d and e<c
         #if (a<b and c<a and c<d and d<b and e<d and e<c and f<d and g<d and
-            #abs(c1-c)<=np.mean([c1,c])*buffer and abs(e1-e)<=np.mean([e1,e])*buffer and
-            #and abs(d1-d)<=np.mean([d1,d])*buffer
+            #and abs(c1-c)<=np.mean([c1,c])*buffer and abs(e1-e)<=np.mean([e1,e])*buffer
+            and abs(d1-d)<=np.mean([d1,d])*buffer
            ):
                patterns['FW'].append((window.index[0], window.index[-1]))
         
@@ -148,5 +150,7 @@ def find_FW(max_min,buffer):
         inv_min = list(max_min[max_min.index==x]['date'])[0]
         inv_max = list(max_min[max_min.index==y]['date'])[0]
         final = pd.concat([final,pd.DataFrame({'start_event':[inv_min],'end_event':[inv_max]})])
+        
+    final['event'] = 'FW'
         
     return final
