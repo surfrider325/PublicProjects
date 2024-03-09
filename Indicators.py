@@ -19,6 +19,7 @@ import bs4 as bs
 import pickle    
 import requests    
 import lxml
+import sqlite3
 
 def save_sp500_tickers():
     resp = requests.get('https://en.wikipedia.org/wiki/List_of_S%26P_500_companies')        
@@ -77,6 +78,33 @@ def get_max_min(prices, smoothing, window_range):
     #max_min = max_min.set_index('day_num')['close']
     
     return max_min[['date','close']]
+
+def find_HS(max_min):  
+    patterns = defaultdict(list)
+    
+    # Window range is 5 units
+    for i in range(5, len(max_min)):  
+        window = max_min.iloc[i-5:i]['close']
+        
+        # Pattern must play out in less than n units
+        if window.index[-1] - window.index[0] > 100:      
+            continue   
+            
+        a, b, c, d, e = window.iloc[0:5]
+                
+        # IHS
+        if a>b and c>a and c>e and c>d and e>d and abs(b-d)<=np.mean([b,d])*0.02:
+               patterns['HS'].append((window.index[0], window.index[-1]))
+        
+    final = pd.DataFrame()
+    for x,y in patterns['HS']:
+        inv_min = list(max_min[max_min.index==x]['date'])[0]
+        inv_max = list(max_min[max_min.index==y]['date'])[0]
+        final = pd.concat([final,pd.DataFrame({'start_event':[inv_min],'end_event':[inv_max]})])
+        
+    final['event'] = 'HS'
+        
+    return final
 
 def find_IHS(max_min):  
     patterns = defaultdict(list)
@@ -152,5 +180,55 @@ def find_FW(max_min,buffer):
         final = pd.concat([final,pd.DataFrame({'start_event':[inv_min],'end_event':[inv_max]})])
         
     final['event'] = 'FW'
+        
+    return final
+
+def find_RW(max_min,buffer):  
+    patterns = defaultdict(list)
+    
+    # Window range is 5 units
+    for i in range(5, len(max_min)):  
+        window = max_min.iloc[i-5:i]['close']
+        
+        # Pattern must play out in less than n units
+        if window.index[-1] - window.index[0] > 100:      
+            continue   
+            
+        a, b, c, d, e = window.iloc[0:5]
+        
+        m = (e-a)/4
+        x1 = i-5
+        intercept = a - x1*m
+        def lower_line(x):
+            y = m*x+intercept
+            
+            return y
+            
+        m = (d-b)/2
+        x1 = i-3
+        intercept = a - x1*m
+        def upper_line(x):
+            y = m*x+intercept
+            
+            return y
+                
+        # FW
+        c1 = lower_line(i-3)
+        e1 = lower_line(i)
+        d1 = upper_line(i-1)
+        if (c>a and a>b and d>b and c>d and e>d and e>c
+        #if (a<b and c<a and c<d and d<b and e<d and e<c and f<d and g<d and
+            #and abs(c1-c)<=np.mean([c1,c])*buffer and abs(e1-e)<=np.mean([e1,e])*buffer
+            and abs(d1-d)<=np.mean([d1,d])*buffer
+           ):
+               patterns['RW'].append((window.index[0], window.index[-1]))
+        
+    final = pd.DataFrame()
+    for x,y in patterns['RW']:
+        inv_min = list(max_min[max_min.index==x]['date'])[0]
+        inv_max = list(max_min[max_min.index==y]['date'])[0]
+        final = pd.concat([final,pd.DataFrame({'start_event':[inv_min],'end_event':[inv_max]})])
+        
+    final['event'] = 'RW'
         
     return final
