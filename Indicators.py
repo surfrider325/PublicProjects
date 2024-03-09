@@ -21,6 +21,12 @@ import requests
 import lxml
 import sqlite3
 
+ticker = 'MMM'
+days = 365
+SMAs = [30,60,90]
+smoothing = 10
+window = 15
+
 def save_sp500_tickers():
     resp = requests.get('https://en.wikipedia.org/wiki/List_of_S%26P_500_companies')        
     soup = bs.BeautifulSoup(resp.text,'lxml')        
@@ -45,6 +51,7 @@ def get_ticker(ticker,days):
     df = df.reset_index()
     df['date'] = df.Datetime.dt.tz_localize(None)
     df.columns = [x.lower() for x in df.columns]
+    df['ticker'] = ticker
     
     return df
 
@@ -102,7 +109,10 @@ def find_HS(max_min):
         inv_max = list(max_min[max_min.index==y]['date'])[0]
         final = pd.concat([final,pd.DataFrame({'start_event':[inv_min],'end_event':[inv_max]})])
         
-    final['event'] = 'HS'
+    final['event'] = 1
+    if len(final)==0:
+        final['start_event'] = None
+        final['end_event'] = None
         
     return final
 
@@ -129,7 +139,10 @@ def find_IHS(max_min):
         inv_max = list(max_min[max_min.index==y]['date'])[0]
         final = pd.concat([final,pd.DataFrame({'start_event':[inv_min],'end_event':[inv_max]})])
         
-    final['event'] = 'IHS'
+    final['event'] = 1
+    if len(final)==0:
+        final['start_event'] = None
+        final['end_event'] = None
         
     return final
 
@@ -179,7 +192,10 @@ def find_FW(max_min,buffer):
         inv_max = list(max_min[max_min.index==y]['date'])[0]
         final = pd.concat([final,pd.DataFrame({'start_event':[inv_min],'end_event':[inv_max]})])
         
-    final['event'] = 'FW'
+    final['event'] = 1
+    if len(final)==0:
+        final['start_event'] = None
+        final['end_event'] = None
         
     return final
 
@@ -229,6 +245,48 @@ def find_RW(max_min,buffer):
         inv_max = list(max_min[max_min.index==y]['date'])[0]
         final = pd.concat([final,pd.DataFrame({'start_event':[inv_min],'end_event':[inv_max]})])
         
-    final['event'] = 'RW'
+    final['event'] = 1
+    if len(final)==0:
+        final['start_event'] = None
+        final['end_event'] = None
         
     return final
+
+def main(ticker,days,SMAs,smoothing,window):
+    df = get_ticker(ticker,500)
+    df = get_sma(df,SMAs)
+    minmax = get_max_min(df, smoothing, window)
+    invhs = find_IHS(minmax).reset_index(drop=True)
+    hs = find_HS(minmax).reset_index(drop=True)
+    fw = find_FW(minmax,.03).reset_index(drop=True)
+    rw = find_RW(minmax,.03).reset_index(drop=True)
+    conn = sqlite3.connect(':memory:')
+    #write the tables
+    df.to_sql('prices', conn, index=False)
+    fw.to_sql('fw', conn, index=False)
+    invhs.to_sql('ihs', conn, index=False)
+    hs.to_sql('hs', conn, index=False)
+    rw.to_sql('rw', conn, index=False)
+    qry = '''
+        select  
+            p.*,
+            ifNULL(f.event,0) as fw_event,
+            ifNULL(r.event,0) as rw_event,
+            ifNULL(i.event,0) as ihs_event,
+            ifNULL(h.event,0) as hs_event
+        from
+            prices p left join fw f on
+            date between f.start_event and f.end_event 
+        left join rw r on
+            date between r.start_event and r.end_event
+        left join ihs i on
+            date between i.start_event and i.end_event
+        left join hs h on
+            date between h.start_event and h.end_event
+        '''
+    final = pd.read_sql_query(qry, conn)
+    
+    return final
+
+if __name__ == '__main__':
+    main(ticker,days)
