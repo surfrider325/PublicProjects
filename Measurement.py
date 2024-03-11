@@ -22,21 +22,22 @@ import lxml
 import sqlite3
 from itertools import chain
 
-def Measure_event(df,events):
+def Measure_event(df,events,N=20):
     for event in events:
         kList = list(df[(df[event]==1)&(df[event].shift(-1)==0)].index)
-        dfList = list(chain(*[range(i+1,i+20,1) for i in kList]))
+        dfList = list(chain(*[range(i+1,i+N,1) for i in kList]))
         viewList = list(chain(*[range(i,i+10,1) for i in kList]))+list(chain(*[range(i-1,i-10,-1) for i in kList]))
         df[event] = np.where(df.index.isin(dfList),-1,df[event])
+        df[event] = np.where((df[event].shift(1)==-1)&(df[event]!=-1),-2,0)
+        
         
     return df
 
-def get_changes(df,events):
-    for event in events:
-        kList = list(df[(df[event]==1)&(df[event].shift(-1)==0)].index)
-        dfList = list(chain(*[range(i+1,i+20,1) for i in kList]))
-        #viewList = list(chain(*[range(i,i+10,1) for i in kList]))+list(chain(*[range(i-1,i-10,-1) for i in kList]))
-        df[event] = np.where(df.index.isin(dfList),-1,df[event])
+def get_changes(df,N=20):
+    df['upper_max'] = df['high'].rolling(window=N, center=False).max()
+    df['lower_min'] = df['low'].rolling(window=N, center=False).min()
+    df['upper_chng'] = (df['upper_max'] - df['close'].shift(N))/df['close']
+    df['lower_chng'] = (df['lower_min'] - df['close'].shift(N))/df['close']
         
     return df
 
