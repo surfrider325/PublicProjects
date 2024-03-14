@@ -28,7 +28,7 @@ def Measure_event(df,events,N=20):
         dfList = list(chain(*[range(i+1,i+N,1) for i in kList]))
         viewList = list(chain(*[range(i,i+10,1) for i in kList]))+list(chain(*[range(i-1,i-10,-1) for i in kList]))
         df[event] = np.where(df.index.isin(dfList),-1,df[event])
-        df[event] = np.where((df[event].shift(1)==-1)&(df[event]!=-1),-2,0)
+        df[event] = np.where((df[event].shift(1)==-1)&(df[event]!=-1),-2,df[event])
         
         
     return df
