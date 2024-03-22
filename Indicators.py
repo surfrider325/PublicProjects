@@ -58,7 +58,7 @@ def get_ticker(ticker,days):
 def get_sma(df,SMAs):
     sma = df.copy()
     for n in SMAs:
-        sma['SMA{}'.format(n)] = sma['close'].rolling(window=n, center=False).mean()
+        sma['SMA{}'.format(n)] = sma.['close'].rolling(window=n, center=False).mean()
     
     return sma
     
@@ -276,13 +276,13 @@ def main(ticker,days,SMAs,smoothing,window):
             ifNULL(h.event,0) as hs_event
         from
             prices p left join fw f on
-            date between f.start_event and f.end_event 
+            p.date between f.start_event and f.end_event 
         left join rw r on
-            date between r.start_event and r.end_event
+            p.date between r.start_event and r.end_event
         left join ihs i on
-            date between i.start_event and i.end_event
+            p.date between i.start_event and i.end_event
         left join hs h on
-            date between h.start_event and h.end_event
+            p.date between h.start_event and h.end_event
         '''
     final = pd.read_sql_query(qry, conn)
     
