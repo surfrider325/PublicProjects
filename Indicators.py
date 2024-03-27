@@ -58,7 +58,7 @@ def get_ticker(ticker,days):
 def get_sma(df,SMAs):
     sma = df.copy()
     for n in SMAs:
-        sma['SMA{}'.format(n)] = sma.['close'].rolling(window=n, center=False).mean()
+        sma['SMA{}'.format(n)] = sma['close'].rolling(window=n, center=False).mean()
     
     return sma
     

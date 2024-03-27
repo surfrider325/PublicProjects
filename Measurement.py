@@ -42,4 +42,16 @@ def get_changes(df,N=30):
         
     return df
 
+def combine_events(events,SMAs,smoothing=10,window=10,N=80,K=500):
+    final = pd.DataFrame()
+    for ticker in tickers:
+        try:
+            df = Indicators.main(ticker,K,SMAs,smoothing,window)
+            df = Measurement.Measure_event(df,events,N)
+            df = Measurement.get_changes(df,N)
+            final = pd.concat([df,final])
+        except Exception as e: 
+            print(e)
+    return final
+
 
