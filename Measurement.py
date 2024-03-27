@@ -21,6 +21,7 @@ import requests
 import lxml
 import sqlite3
 from itertools import chain
+import Indicators
 
 def Measure_event(df,events,N=30):
     for event in events:
@@ -42,13 +43,13 @@ def get_changes(df,N=30):
         
     return df
 
-def combine_events(events,SMAs,smoothing=10,window=10,N=80,K=500):
+def combine_events(tickers,events,SMAs,smoothing=10,window=10,N=80,K=500):
     final = pd.DataFrame()
     for ticker in tickers:
         try:
             df = Indicators.main(ticker,K,SMAs,smoothing,window)
-            df = Measurement.Measure_event(df,events,N)
-            df = Measurement.get_changes(df,N)
+            df = Measure_event(df,events,N)
+            df = get_changes(df,N)
             final = pd.concat([df,final])
         except Exception as e: 
             print(e)

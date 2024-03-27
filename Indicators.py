@@ -253,7 +253,7 @@ def find_RW(max_min,buffer):
     return final
 
 def main(ticker,days,SMAs,smoothing,window):
-    df = get_ticker(ticker,500)
+    df = get_ticker(ticker,days)
     df = get_sma(df,SMAs)
     minmax = get_max_min(df, smoothing, window)
     invhs = find_IHS(minmax).reset_index(drop=True)
