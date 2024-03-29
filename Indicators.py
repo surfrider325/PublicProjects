@@ -252,7 +252,7 @@ def find_RW(max_min,buffer):
         
     return final
 
-def main(ticker,days,SMAs,smoothing,window):
+def main(ticker,days=365,SMAs = [30,60],smoothing=10,window=10):
     df = get_ticker(ticker,days)
     df = get_sma(df,SMAs)
     minmax = get_max_min(df, smoothing, window)
