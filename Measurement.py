@@ -24,14 +24,25 @@ from itertools import chain
 import Indicators
 
 def Measure_event(df,events,N=30):
+    A = len(events)
     for event in events:
         kList = list(df[(df[event]==1)&(df[event].shift(-1)==0)].index)
         dfList = list(chain(*[range(i+1,i+N,1) for i in kList]))
         #viewList = list(chain(*[range(i,i+10,1) for i in kList]))+list(chain(*[range(i-1,i-10,-1) for i in kList]))
-        df[event] = np.where(df.index.isin(dfList),-1,df[event])
+        df[event+'_after'] = np.where(df.index.isin(dfList), 1, 0)
+        #df[event+'_final'] = np.where((df[event+'_after'].shift(1)==1)&(df[event+'_after']!=1),1,0)
+        df[event+'_none'] = np.where((df[event] + df[event+'_after']) == 0, 1, 0)
+        df[event + '_group'] = np.where(df[event].shift(1) != df[event], 1, 0)
+        df[event + '_group'] = df.groupby(['ticker'])[event + '_group'].cumsum()
+        df[event + '_group2'] = np.where(df[event+'_after'].shift(1) != df[event+'_after'], 1, 0)
+        df[event + '_group2'] = df.groupby(['ticker'])[event + '_group2'].cumsum()
+        df[event + '_start_time'] = df.groupby(['ticker',event + '_group'])['date'].transform('min')
+        df[event + '_end_time'] = df.groupby(['ticker',event + '_group'])['date'].transform('max')
+        df[event + '_start_time2'] = df.groupby(['ticker',event + '_group2'])['date'].transform('min')
+        df[event + '_end_time2'] = df.groupby(['ticker',event + '_group2'])['date'].transform('max')
         
-        df[event] = np.where((df[event].shift(1)==-1)&(df[event]!=-1),-2,df[event])
-        
+    cols = [x for x in df.columns if '_none' in x]
+    df['no_events'] = np.where(df[cols].sum(axis=1, numeric_only=True)==A, 1, 0)
         
     return df
 
