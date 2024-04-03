@@ -27,7 +27,7 @@ def Measure_event(df,events,N=30):
     A = len(events)
     for event in events:
         kList = list(df[(df[event]==1)&(df[event].shift(-1)==0)].index)
-        dfList = list(chain(*[range(i+1,i+N,1) for i in kList]))
+        dfList = list(chain(*[range(i,i+N,1) for i in kList]))
         #viewList = list(chain(*[range(i,i+10,1) for i in kList]))+list(chain(*[range(i-1,i-10,-1) for i in kList]))
         df[event+'_after'] = np.where(df.index.isin(dfList), 1, 0)
         #df[event+'_final'] = np.where((df[event+'_after'].shift(1)==1)&(df[event+'_after']!=1),1,0)
@@ -65,5 +65,70 @@ def combine_events(tickers,events,SMAs,smoothing=10,window=10,N=80,K=500):
         except Exception as e: 
             print(e)
     return final
+
+def get_totals(df3, events):
+
+    final4 = pd.DataFrame()
+    for event in events:
+        if [val for key, val in events.items() if event in key][0] == 'bull':
+            final1 = df3[df3[event]==1].groupby(['ticker',event, event + '_start_time', event + '_end_time']).upper_chng.describe().reset_index()
+            final2 = df3[(df3[event+'_after']==1)&(df3['date']==df3[event+'_end_time2'])].groupby(['ticker',
+                event+'_after', event+ '_start_time2',event + '_end_time2']).upper_chng.describe().reset_index()
+            final3 = df3[df3['no_events']==1].groupby(['ticker']).upper_chng.describe().reset_index()
+        else:
+            final1 = df3[df3[event]==1].groupby(['ticker',event, event + '_start_time', event + '_end_time']).lower_chng.describe().reset_index()
+            final2 = df3[(df3[event+'_after']==1)&(df3['date']==df3[event+'_end_time2'])].groupby(['ticker',
+                event+'_after', event+ '_start_time2',event + '_end_time2']).lower_chng.describe().reset_index()
+            final3 = df3[df3['no_events']==1].groupby(['ticker']).lower_chng.describe().reset_index()
+
+        ##rename columsn and remove unneccesary ones
+        final1.rename(columns={'count':'event_observations'},inplace=True)
+        final2.rename(columns={'count':'after_event_observations', 'mean':'after_event_mean'},inplace=True)
+        final3.rename(columns={'50%':'median'},inplace=True)
+    
+        conn = sqlite3.connect(':memory:')
+        #write the tables
+        final1.to_sql('f1', conn, index=False)
+        final2.to_sql('f2', conn, index=False)
+        final3.to_sql('f3', conn, index=False)
+        qry = '''
+        select  
+            f1.ticker,
+            {} as event,
+            f1.event_observations,
+            f1.{} as event_start_time,
+            f1.{} as event_end_time,
+            f2.after_event_observations,
+            f2.after_event_mean,
+            f2.{} as after_event_start_time,
+            f2.{} as after_event_end_time,
+            f3.count,
+            f3.mean,
+            f3.min,
+            f3.median,
+            f3.max
+        from
+            f1 left join f2 on
+            f1.ticker = f2.ticker
+            and f2.{} = f1.{}
+        left join f3 on
+            f3.ticker = f1.ticker      
+        '''.format(event,event+'_start_time',event+'_end_time',
+                   event+'_start_time2',event+'_end_time2',
+                   event+'_start_time2',event+'_end_time'
+                  #,event+'_start_time2',event+'_end_time'
+                  )
+        final = pd.read_sql_query(qry, conn)
+        #final = final.merge(final3, on=['ticker'])
+        final['event'] = event
+        if [val for key, val in events.items() if event in key][0] == 'bull':
+            final['Indicator'] = np.where(final['after_event_mean'] > final['median'], 1, 0)
+        else:
+            final['Indicator'] = np.where(final['after_event_mean'] < final['median'], 1, 0)
+    
+        final4 = pd.concat([final,final4],axis=0)
+        
+    return final4
+
 
 
