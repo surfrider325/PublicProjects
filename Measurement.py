@@ -58,7 +58,7 @@ def combine_events(tickers,events,SMAs,smoothing=10,window=10,N=80,K=500):
     final = pd.DataFrame()
     for ticker in tickers:
         try:
-            df = Indicators.main(ticker,K,SMAs,smoothing,window)
+            df = Indicators.main(ticker,events,K,SMAs,smoothing,window)
             df = Measure_event(df,events,N)
             df = get_changes(df,N)
             final = pd.concat([df,final])

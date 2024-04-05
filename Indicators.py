@@ -26,6 +26,7 @@ days = 365
 SMAs = [30,60,90]
 smoothing = 10
 window = 15
+events = {'ihs_event':'bull','hs_event':'bear','fw_event':'bull','rw_event':'bear'}
 
 def save_sp500_tickers():
     resp = requests.get('https://en.wikipedia.org/wiki/List_of_S%26P_500_companies')        
@@ -86,7 +87,7 @@ def get_max_min(prices, smoothing, window_range):
     
     return max_min[['date','close']]
 
-def find_HS(max_min):  
+def hs_event(max_min):  
     patterns = defaultdict(list)
     
     # Window range is 5 units
@@ -116,7 +117,7 @@ def find_HS(max_min):
         
     return final
 
-def find_IHS(max_min):  
+def ihs_event(max_min):  
     patterns = defaultdict(list)
     
     # Window range is 5 units
@@ -146,7 +147,7 @@ def find_IHS(max_min):
         
     return final
 
-def find_FW(max_min,buffer):  
+def fw_event(max_min,buffer=.03):  
     patterns = defaultdict(list)
     
     # Window range is 5 units
@@ -199,7 +200,7 @@ def find_FW(max_min,buffer):
         
     return final
 
-def find_RW(max_min,buffer):  
+def rw_event(max_min,buffer=.03):  
     patterns = defaultdict(list)
     
     # Window range is 5 units
@@ -252,21 +253,20 @@ def find_RW(max_min,buffer):
         
     return final
 
-def main(ticker,days=365,SMAs = [30,60],smoothing=10,window=10):
+def main(ticker, events, days=365, SMAs = [30,60], smoothing=10, window=10):
     df = get_ticker(ticker,days)
     df = get_sma(df,SMAs)
     minmax = get_max_min(df, smoothing, window)
-    invhs = find_IHS(minmax).reset_index(drop=True)
-    hs = find_HS(minmax).reset_index(drop=True)
-    fw = find_FW(minmax,.03).reset_index(drop=True)
-    rw = find_RW(minmax,.03).reset_index(drop=True)
+    events_df = {}
+    for event in events:
+        events_df[event] = globals()[event](minmax).reset_index(drop=True)
+    
     conn = sqlite3.connect(':memory:')
     #write the tables
     df.to_sql('prices', conn, index=False)
-    fw.to_sql('fw', conn, index=False)
-    invhs.to_sql('ihs', conn, index=False)
-    hs.to_sql('hs', conn, index=False)
-    rw.to_sql('rw', conn, index=False)
+    for event in events:
+        events_df[event].to_sql(event, conn, index=False)
+    
     qry = '''
         select  
             p.*,
@@ -275,13 +275,14 @@ def main(ticker,days=365,SMAs = [30,60],smoothing=10,window=10):
             ifNULL(i.event,0) as ihs_event,
             ifNULL(h.event,0) as hs_event
         from
-            prices p left join fw f on
+            prices p 
+        left join fw_event f on
             p.date between f.start_event and f.end_event 
-        left join rw r on
+        left join rw_event r on
             p.date between r.start_event and r.end_event
-        left join ihs i on
+        left join ihs_event i on
             p.date between i.start_event and i.end_event
-        left join hs h on
+        left join hs_event h on
             p.date between h.start_event and h.end_event
         '''
     final = pd.read_sql_query(qry, conn)
@@ -289,4 +290,4 @@ def main(ticker,days=365,SMAs = [30,60],smoothing=10,window=10):
     return final
 
 if __name__ == '__main__':
-    main(ticker,days)
+    main(ticker,events)
