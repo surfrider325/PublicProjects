@@ -81,7 +81,7 @@ def chart_all(df,events,events_df,SMAs,minmax):
                  )
     fig.show()
     
-def chart_event(df3, event, ticker):
+def chart_event(df3, event, ticker, SMAs):
     df = df3[df3.ticker==ticker].copy()
     fig = go.Figure()
     fig = go.Figure(data=[go.Candlestick(x=df['date'],
