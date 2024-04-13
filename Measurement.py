@@ -130,5 +130,32 @@ def get_totals(df3, events):
         
     return final4
 
+def main(events= {'fw_event':'bull','rw_event':'bear'},
+         SMAs = [30,60], smoothing = 7, window = 7, M = 80,K = 500, bound = 0.02):
+    tickers = Indicators.save_sp500_tickers()
+    df3 = combine_events(tickers,events,SMAs,smoothing,window,M,K)
+    df3.reset_index(inplace=True,drop=True)
+    final4 = get_totals(df3,events)
+    final4.reset_index(inplace=True)
+    #final4['50%-2'] = pd.Series(["{0:.2f}%".format(val * 100) for val in final4['50%-2']], index = final4.index)
 
+    eventSuccess = final4[(abs(final4['after_event_mean']-final4['median']) > bound)&
+        (final4['event_observations']> 10)&
+        (pd.to_datetime(final4['after_event_end_time'])<(datetime.today()-timedelta(days=1)))].groupby('event')['Indicator'].mean(). \
+        reset_index(). \
+        rename(columns={'Indicator':'event_success'})
+    stockSuccess = final4[(abs(final4['after_event_mean']-final4['median']) > bound)&
+        (final4['event_observations']> 10)&
+        (pd.to_datetime(final4['after_event_end_time'])<(datetime.today()-timedelta(days=1)))].groupby(['event','ticker']). \
+        agg({'Indicator':'mean','after_event_observations':'sum'}). \
+        reset_index(). \
+        rename(columns={'Indicator':'stock_success','after_event_observations':'event_count'})
+    totalSuccess = eventSuccess.merge(stockSuccess, on = ['event'])
+    totalSuccess = totalSuccess[['event','ticker','event_count','event_success','stock_success']]
 
+    final4 = final4.merge(totalSuccess, on = ['event','ticker'])
+    
+    return df3, final4
+
+if __name__ == '__main__':
+    main()
