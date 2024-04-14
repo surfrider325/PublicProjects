@@ -87,7 +87,7 @@ def get_max_min(prices, smoothing, window_range):
     
     return max_min[['date','close']]
 
-def hs_event(max_min):  
+def hs_event(max_min,buffer=.99):  
     patterns = defaultdict(list)
     
     # Window range is 5 units
@@ -101,7 +101,7 @@ def hs_event(max_min):
         a, b, c, d, e = window.iloc[0:5]
                 
         # IHS
-        if a>b and c>a and c>e and c>d and e>d and abs(b-d)<=np.mean([b,d])*0.02:
+        if buffer*a>b and buffer*c>a and buffer*c>e and buffer*c>d and buffer*e>d and abs(b-d)<=np.mean([b,d])*0.02:
                patterns['HS'].append((window.index[0], window.index[-1]))
         
     final = pd.DataFrame()
@@ -117,7 +117,7 @@ def hs_event(max_min):
         
     return final
 
-def ihs_event(max_min):  
+def ihs_event(max_min,buffer = .99):  
     patterns = defaultdict(list)
     
     # Window range is 5 units
@@ -131,7 +131,7 @@ def ihs_event(max_min):
         a, b, c, d, e = window.iloc[0:5]
                 
         # IHS
-        if a<b and c<a and c<e and c<d and e<d and abs(b-d)<=np.mean([b,d])*0.02:
+        if a<b*buffer and c<a*buffer and c<e*buffer and c<d*buffer and e<d*buffer and abs(b-d)<=np.mean([b,d])*0.02:
                patterns['IHS'].append((window.index[0], window.index[-1]))
         
     final = pd.DataFrame()
@@ -147,7 +147,7 @@ def ihs_event(max_min):
         
     return final
 
-def fw_event(max_min,buffer=.03):  
+def fw_event(max_min,buffer=.995,buffer1=.03):  
     patterns = defaultdict(list)
     
     # Window range is 5 units
@@ -180,10 +180,10 @@ def fw_event(max_min,buffer=.03):
         c1 = lower_line(i-3)
         e1 = lower_line(i)
         d1 = upper_line(i-1)
-        if (c<a and a<b and d<b and c<d and e<d and e<c
+        if (c<a*buffer and a<b*buffer and d<b*buffer and c<d*buffer and e<d*buffer and e<c*buffer
         #if (a<b and c<a and c<d and d<b and e<d and e<c and f<d and g<d and
             #and abs(c1-c)<=np.mean([c1,c])*buffer and abs(e1-e)<=np.mean([e1,e])*buffer
-            and abs(d1-d)<=np.mean([d1,d])*buffer
+            and abs(d1-d)<=np.mean([d1,d])*buffer1
            ):
                patterns['FW'].append((window.index[0], window.index[-1]))
         
@@ -200,7 +200,7 @@ def fw_event(max_min,buffer=.03):
         
     return final
 
-def rw_event(max_min,buffer=.03):  
+def rw_event(max_min,buffer=.995,buffer1=.03):  
     patterns = defaultdict(list)
     
     # Window range is 5 units
@@ -233,10 +233,10 @@ def rw_event(max_min,buffer=.03):
         c1 = lower_line(i-3)
         e1 = lower_line(i)
         d1 = upper_line(i-1)
-        if (c>a and a>b and d>b and c>d and e>d and e>c
+        if (buffer*c>a and buffer*a>b and buffer*d>b and buffer*c>d and buffer*e>d and buffer*e>c
         #if (a<b and c<a and c<d and d<b and e<d and e<c and f<d and g<d and
             #and abs(c1-c)<=np.mean([c1,c])*buffer and abs(e1-e)<=np.mean([e1,e])*buffer
-            and abs(d1-d)<=np.mean([d1,d])*buffer
+            and abs(d1-d)<=np.mean([d1,d])*buffer1
            ):
                patterns['RW'].append((window.index[0], window.index[-1]))
         

@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 import os
 import re
 import matplotlib as mpl
@@ -70,7 +70,7 @@ def get_totals(df3, events):
 
     final4 = pd.DataFrame()
     for event in events:
-        if [val for key, val in events.items() if event in key][0] == 'bull':
+        if [val for key, val in events.items() if event == key][0] == 'bull':
             final1 = df3[df3[event]==1].groupby(['ticker',event, event + '_start_time', event + '_end_time']).upper_chng.describe().reset_index()
             final2 = df3[(df3[event+'_after']==1)&(df3['date']==df3[event+'_end_time2'])].groupby(['ticker',
                 event+'_after', event+ '_start_time2',event + '_end_time2']).upper_chng.describe().reset_index()
