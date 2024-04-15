@@ -22,7 +22,7 @@ def Measurement_Run():
     df_print = final4.sort_values(['event_end_time'],ascending=0).head(15)
     df_print.drop(['index','after_event_observations','after_event_mean','count','mean','min','median','max','Indicator'],axis=1,inplace=True)
     
-    slack_webhook_block.notify("```" + tabulate(df_print, tablefmt="grid"))
+    slack_webhook_block.notify("```\n" + tabulate(df_print, tablefmt="grid") + "\n```")
     
 if __name__ == "__main__":
     Measurement_Run()
