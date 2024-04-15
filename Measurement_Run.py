@@ -20,7 +20,9 @@ SMAs = [30,60,90]
 def Measurement_Run():
     df3, final4 = Measurement.main(events, SMAs, smoothing, window, M, K, bound)
     df_print = final4.sort_values(['event_end_time'],ascending=0).head(15)
-    df_print.drop(['index','after_event_observations','after_event_mean','count','mean','min','median','max','Indicator'],axis=1,inplace=True)
+    df_print.drop(['index','after_event_observations','after_event_mean',
+                   'after_event_start_time','after_event_end_time',
+                   'count','mean','min','median','max','Indicator'],axis=1,inplace=True)
     
     slack_webhook_block.notify("```\n" + tabulate(df_print, tablefmt="grid") + "\n```")
     
