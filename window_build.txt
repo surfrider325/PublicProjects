@@ -1,0 +1,12 @@
+
+**Batch file needs to be cleaned up, but these are necessary commands for now
+
+pip install -r requirements.txt
+
+prefect server start
+
+python Measurement_Run.py
+
+python create_deployment.py
+
+prefect worker start -pool "main"

@@ -21,13 +21,13 @@ pull:
 
 # the deployments section allows you to provide configuration for deploying flows
 deployments:
-- name: Measurement_Run
+- name: null
   version: null
   tags: []
   description: null
   schedule: {}
-  flow_name: Measurement-Run
-  entrypoint: Measurement_Run.py:Measurement-Run
+  flow_name: null
+  entrypoint: null
   parameters: {}
   work_pool:
     name: main

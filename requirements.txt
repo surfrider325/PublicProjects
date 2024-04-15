@@ -1,0 +1,14 @@
+
+requests==2.31.0
+pandas==2.1.1
+numpy==1.26.1
+bs4==4.12.3
+plotly==5.20.0
+sqlite3
+matplotlib==3.8.4
+scikit-learn==1.4.2
+yfinance==0.2.37
+scipy==1.13.0
+collections
+pickle
+lxml==5.2.1
