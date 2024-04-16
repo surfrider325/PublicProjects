@@ -20,11 +20,13 @@ SMAs = [30,60,90]
 def Measurement_Run():
     df3, final4 = Measurement.main(events, SMAs, smoothing, window, M, K, bound)
     df_print = final4.sort_values(['event_end_time'],ascending=0).head(15)
+    df_print['event_success'] = pd.Series(["{0:.2f}%".format(val * 100) for val in df_print['event_success']], index = df_print.index)
+    df_print['stock_success'] = pd.Series(["{0:.2f}%".format(val * 100) for val in df_print['stock_success']], index = df_print.index)
     df_print.drop(['index','after_event_observations','after_event_mean',
                    'after_event_start_time','after_event_end_time',
                    'count','mean','min','median','max','Indicator'],axis=1,inplace=True)
     
-    slack_webhook_block.notify("```\n" + print(tabulate(df_print, headers='keys', tablefmt="grid")) + "\n```")
+    slack_webhook_block.notify(print("```\n" + tabulate(df_print, headers='keys', tablefmt="grid") + "\n```"))
     
 if __name__ == "__main__":
     Measurement_Run()
