@@ -27,7 +27,7 @@ def Measurement_Run():
                    'after_event_start_time','after_event_end_time',
                    'count','mean','min','median','max','Indicator'],axis=1,inplace=True)
     
-    slack_webhook_block.notify(print("```\n" + tabulate(df_print, headers='keys', tablefmt="grid") + "\n```"))
+    slack_webhook_block.notify("```\n" + tabulate(df_print, headers='keys', tablefmt="grid") + "\n```")
     
 if __name__ == "__main__":
     Measurement_Run()
