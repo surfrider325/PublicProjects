@@ -26,8 +26,15 @@ def Measurement_Run():
     df_print.drop(['index','after_event_observations','after_event_mean',
                    'after_event_start_time','after_event_end_time',
                    'count','mean','min','median','max','Indicator'],axis=1,inplace=True)
+    df_print.set_index('ticker', inplace=True)
+    df_print = df.rename(columns={'event_observations':'obs','event_start_time':'startTime','event_end_time':'endTime',
+                    'event_success':'eventSucc','stock_success','stockSucc'})
     
-    slack_webhook_block.notify("```\n" + tabulate(df_print, headers='keys', tablefmt="grid") + "\n```")
+    df_print = tabulate(df_print, headers='keys', tablefmt="grid")   
+    frontstring = "```\n"
+    backstring = "\n```"
+    
+    slack_webhook_block.notify(f"{frontstring}{df_print}{backstring}")
     
 if __name__ == "__main__":
     Measurement_Run()
