@@ -1,6 +1,7 @@
 from prefect import flow
 from prefect.blocks.notifications import SlackWebhook
 from tabulate import tabulate
+import pandas as pd
 
 import Indicators
 import Measurement
