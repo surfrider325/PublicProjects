@@ -27,7 +27,7 @@ def Measurement_Run():
                    'after_event_start_time','after_event_end_time',
                    'count','mean','min','median','max','Indicator'],axis=1,inplace=True)
     df_print.set_index('ticker', inplace=True)
-    df_print = df.rename(columns={'event_observations':'obs','event_start_time':'startTime','event_end_time':'endTime',
+    df_print = df_print.rename(columns={'event_observations':'obs','event_start_time':'startTime','event_end_time':'endTime',
                     'event_success':'eventSucc','stock_success':'stockSucc'})
     
     df_print = tabulate(df_print, headers='keys', tablefmt="grid")   
