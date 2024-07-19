@@ -258,33 +258,23 @@ def main(ticker, events, days=365, SMAs = [30,60], smoothing=10, window=10):
     df = get_sma(df,SMAs)
     minmax = get_max_min(df, smoothing, window)
     events_df = {}
+    q1 = '''
+    select
+    p.*'''
+    q2 = '''
+    from prices p'''
     for event in events:
         events_df[event] = globals()[event](minmax).reset_index(drop=True)
-    
+        q1 += '\n,ifNULL({}.event,0) as {}'.format(event,event)
+        q2 += '\nleft join {} on \n p.date between {}.start_event and {}.end_event'.format(event,event,event)
+        
     conn = sqlite3.connect(':memory:')
     #write the tables
     df.to_sql('prices', conn, index=False)
     for event in events:
         events_df[event].to_sql(event, conn, index=False)
     
-    qry = '''
-        select  
-            p.*,
-            ifNULL(f.event,0) as fw_event,
-            ifNULL(r.event,0) as rw_event,
-            ifNULL(i.event,0) as ihs_event,
-            ifNULL(h.event,0) as hs_event
-        from
-            prices p 
-        left join fw_event f on
-            p.date between f.start_event and f.end_event 
-        left join rw_event r on
-            p.date between r.start_event and r.end_event
-        left join ihs_event i on
-            p.date between i.start_event and i.end_event
-        left join hs_event h on
-            p.date between h.start_event and h.end_event
-        '''
+    qry = q1 + q2
     final = pd.read_sql_query(qry, conn)
     
     return final
