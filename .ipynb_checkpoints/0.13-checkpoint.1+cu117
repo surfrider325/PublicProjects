@@ -1,0 +1,53 @@
+Looking in indexes: https://pypi.org/simple, https://download.pytorch.org/whl/cu117
+Collecting torch==1.13.1+cu117
+  Downloading https://download.pytorch.org/whl/cu117/torch-1.13.1%2Bcu117-cp39-cp39-win_amd64.whl (2255.6 MB)
+Collecting torchvision
+  Downloading torchvision-0.19.1-cp39-cp39-win_amd64.whl (1.3 MB)
+Collecting torchaudio
+  Downloading torchaudio-2.4.1-cp39-cp39-win_amd64.whl (2.4 MB)
+Requirement already satisfied: typing-extensions in c:\users\rschaub\anaconda3\lib\site-packages (from torch==1.13.1+cu117) (4.12.2)
+Requirement already satisfied: numpy in c:\users\rschaub\anaconda3\lib\site-packages (from torchvision) (1.21.5)
+Requirement already satisfied: pillow!=8.3.*,>=5.3.0 in c:\users\rschaub\anaconda3\lib\site-packages (from torchvision) (9.0.1)
+Collecting torchvision
+  Downloading torchvision-0.19.0-1-cp39-cp39-win_amd64.whl (1.3 MB)
+  Downloading torchvision-0.18.1-cp39-cp39-win_amd64.whl (1.2 MB)
+  Downloading torchvision-0.18.0-cp39-cp39-win_amd64.whl (1.2 MB)
+  Downloading torchvision-0.17.2-cp39-cp39-win_amd64.whl (1.2 MB)
+  Downloading torchvision-0.17.1-cp39-cp39-win_amd64.whl (1.2 MB)
+  Downloading torchvision-0.17.0-cp39-cp39-win_amd64.whl (1.2 MB)
+  Downloading torchvision-0.16.2-cp39-cp39-win_amd64.whl (1.1 MB)
+Requirement already satisfied: requests in c:\users\rschaub\anaconda3\lib\site-packages (from torchvision) (2.28.2)
+  Downloading torchvision-0.16.1-cp39-cp39-win_amd64.whl (1.1 MB)
+  Downloading torchvision-0.16.0-cp39-cp39-win_amd64.whl (1.3 MB)
+  Downloading https://download.pytorch.org/whl/cu117/torchvision-0.15.2%2Bcu117-cp39-cp39-win_amd64.whl (4.9 MB)
+  Downloading torchvision-0.15.2-cp39-cp39-win_amd64.whl (1.2 MB)
+  Downloading https://download.pytorch.org/whl/cu117/torchvision-0.15.1%2Bcu117-cp39-cp39-win_amd64.whl (4.9 MB)
+  Downloading torchvision-0.15.1-cp39-cp39-win_amd64.whl (1.2 MB)
+  Downloading https://download.pytorch.org/whl/cu117/torchvision-0.15.0%2Bcu117-cp39-cp39-win_amd64.whl (4.9 MB)
+  Downloading https://download.pytorch.org/whl/cu117/torchvision-0.14.1%2Bcu117-cp39-cp39-win_amd64.whl (4.8 MB)
+Collecting torchaudio
+  Downloading torchaudio-2.4.0-cp39-cp39-win_amd64.whl (2.4 MB)
+  Downloading torchaudio-2.3.1-cp39-cp39-win_amd64.whl (2.4 MB)
+  Downloading torchaudio-2.3.0-cp39-cp39-win_amd64.whl (2.4 MB)
+  Downloading torchaudio-2.2.2-cp39-cp39-win_amd64.whl (2.4 MB)
+  Downloading torchaudio-2.2.1-cp39-cp39-win_amd64.whl (2.4 MB)
+  Downloading torchaudio-2.2.0-cp39-cp39-win_amd64.whl (2.4 MB)
+  Downloading torchaudio-2.1.2-cp39-cp39-win_amd64.whl (2.3 MB)
+  Downloading torchaudio-2.1.1-cp39-cp39-win_amd64.whl (2.3 MB)
+  Downloading torchaudio-2.1.0-cp39-cp39-win_amd64.whl (2.3 MB)
+  Downloading https://download.pytorch.org/whl/cu117/torchaudio-2.0.2%2Bcu117-cp39-cp39-win_amd64.whl (2.5 MB)
+  Downloading torchaudio-2.0.2-cp39-cp39-win_amd64.whl (2.1 MB)
+  Downloading https://download.pytorch.org/whl/cu117/torchaudio-2.0.1%2Bcu117-cp39-cp39-win_amd64.whl (2.5 MB)
+  Downloading torchaudio-2.0.1-cp39-cp39-win_amd64.whl (2.1 MB)
+  Downloading https://download.pytorch.org/whl/cu117/torchaudio-2.0.0%2Bcu117-cp39-cp39-win_amd64.whl (2.5 MB)
+  Downloading https://download.pytorch.org/whl/cu117/torchaudio-0.13.1%2Bcu117-cp39-cp39-win_amd64.whl (2.3 MB)
+Requirement already satisfied: charset-normalizer<4,>=2 in c:\users\rschaub\anaconda3\lib\site-packages (from requests->torchvision) (2.0.4)
+Requirement already satisfied: idna<4,>=2.5 in c:\users\rschaub\anaconda3\lib\site-packages (from requests->torchvision) (3.3)
+Requirement already satisfied: certifi>=2017.4.17 in c:\users\rschaub\anaconda3\lib\site-packages (from requests->torchvision) (2021.10.8)
+Requirement already satisfied: urllib3<1.27,>=1.21.1 in c:\users\rschaub\anaconda3\lib\site-packages (from requests->torchvision) (1.26.9)
+Installing collected packages: torch, torchvision, torchaudio
+  Attempting uninstall: torch
+    Found existing installation: torch 1.7.1+cu110
+    Uninstalling torch-1.7.1+cu110:
+      Successfully uninstalled torch-1.7.1+cu110
+Successfully installed torch-1.13.1+cu117 torchaudio-0.13.1+cu117 torchvision-0.14.1+cu117
