@@ -29,22 +29,10 @@ window = 15
 events = {'ihs_event':'bull','hs_event':'bear','fw_event':'bull','rw_event':'bear'}
 
 def save_sp500_tickers():
-    resp = requests.get('https://en.wikipedia.org/wiki/List_of_S%26P_500_companies')        
-    soup = bs.BeautifulSoup(resp.text,'lxml')        
-    table = soup.find('table', {'class': 'wikitable sortable'})        
+    tickers = pd.read_html(
+    'https://en.wikipedia.org/wiki/List_of_S%26P_500_companies')[0]
 
-    tickers = []
-
-    for row in table.findAll('tr')[1:]:
-        ticker = row.findAll('td')[0].text
-        tickers.append(ticker)
-
-    with open("sp500tickers.pickle", "wb") as f:
-        pickle.dump(tickers, f)
-    
-    tickers = [re.sub('\n','',x) for x in tickers]
-
-    return tickers    
+    return tickers.Symbol 
 
 def get_ticker(ticker,days):
     my_ticker = yf.Ticker(ticker)

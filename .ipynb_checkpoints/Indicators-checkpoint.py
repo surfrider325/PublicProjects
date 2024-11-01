@@ -26,24 +26,13 @@ days = 365
 SMAs = [30,60,90]
 smoothing = 10
 window = 15
+events = {'ihs_event':'bull','hs_event':'bear','fw_event':'bull','rw_event':'bear'}
 
 def save_sp500_tickers():
-    resp = requests.get('https://en.wikipedia.org/wiki/List_of_S%26P_500_companies')        
-    soup = bs.BeautifulSoup(resp.text,'lxml')        
-    table = soup.find('table', {'class': 'wikitable sortable'})        
+    tickers = pd.read_html(
+    'https://en.wikipedia.org/wiki/List_of_S%26P_500_companies')[0]
 
-    tickers = []
-
-    for row in table.findAll('tr')[1:]:
-        ticker = row.findAll('td')[0].text
-        tickers.append(ticker)
-
-    with open("sp500tickers.pickle", "wb") as f:
-        pickle.dump(tickers, f)
-    
-    tickers = [re.sub('\n','',x) for x in tickers]
-
-    return tickers    
+    return tickers.Symbol 
 
 def get_ticker(ticker,days):
     my_ticker = yf.Ticker(ticker)
@@ -86,7 +75,7 @@ def get_max_min(prices, smoothing, window_range):
     
     return max_min[['date','close']]
 
-def find_HS(max_min):  
+def hs_event(max_min,buffer=.99):  
     patterns = defaultdict(list)
     
     # Window range is 5 units
@@ -100,7 +89,7 @@ def find_HS(max_min):
         a, b, c, d, e = window.iloc[0:5]
                 
         # IHS
-        if a>b and c>a and c>e and c>d and e>d and abs(b-d)<=np.mean([b,d])*0.02:
+        if buffer*a>b and buffer*c>a and buffer*c>e and buffer*c>d and buffer*e>d and abs(b-d)<=np.mean([b,d])*0.02:
                patterns['HS'].append((window.index[0], window.index[-1]))
         
     final = pd.DataFrame()
@@ -116,7 +105,7 @@ def find_HS(max_min):
         
     return final
 
-def find_IHS(max_min):  
+def ihs_event(max_min,buffer = .99):  
     patterns = defaultdict(list)
     
     # Window range is 5 units
@@ -130,7 +119,7 @@ def find_IHS(max_min):
         a, b, c, d, e = window.iloc[0:5]
                 
         # IHS
-        if a<b and c<a and c<e and c<d and e<d and abs(b-d)<=np.mean([b,d])*0.02:
+        if a<b*buffer and c<a*buffer and c<e*buffer and c<d*buffer and e<d*buffer and abs(b-d)<=np.mean([b,d])*0.02:
                patterns['IHS'].append((window.index[0], window.index[-1]))
         
     final = pd.DataFrame()
@@ -146,7 +135,7 @@ def find_IHS(max_min):
         
     return final
 
-def find_FW(max_min,buffer):  
+def fw_event(max_min,buffer=.995,buffer1=.03):  
     patterns = defaultdict(list)
     
     # Window range is 5 units
@@ -179,10 +168,10 @@ def find_FW(max_min,buffer):
         c1 = lower_line(i-3)
         e1 = lower_line(i)
         d1 = upper_line(i-1)
-        if (c<a and a<b and d<b and c<d and e<d and e<c
+        if (c<a*buffer and a<b*buffer and d<b*buffer and c<d*buffer and e<d*buffer and e<c*buffer
         #if (a<b and c<a and c<d and d<b and e<d and e<c and f<d and g<d and
             #and abs(c1-c)<=np.mean([c1,c])*buffer and abs(e1-e)<=np.mean([e1,e])*buffer
-            and abs(d1-d)<=np.mean([d1,d])*buffer
+            and abs(d1-d)<=np.mean([d1,d])*buffer1
            ):
                patterns['FW'].append((window.index[0], window.index[-1]))
         
@@ -199,7 +188,7 @@ def find_FW(max_min,buffer):
         
     return final
 
-def find_RW(max_min,buffer):  
+def rw_event(max_min,buffer=.995,buffer1=.03):  
     patterns = defaultdict(list)
     
     # Window range is 5 units
@@ -232,10 +221,10 @@ def find_RW(max_min,buffer):
         c1 = lower_line(i-3)
         e1 = lower_line(i)
         d1 = upper_line(i-1)
-        if (c>a and a>b and d>b and c>d and e>d and e>c
+        if (buffer*c>a and buffer*a>b and buffer*d>b and buffer*c>d and buffer*e>d and buffer*e>c
         #if (a<b and c<a and c<d and d<b and e<d and e<c and f<d and g<d and
             #and abs(c1-c)<=np.mean([c1,c])*buffer and abs(e1-e)<=np.mean([e1,e])*buffer
-            and abs(d1-d)<=np.mean([d1,d])*buffer
+            and abs(d1-d)<=np.mean([d1,d])*buffer1
            ):
                patterns['RW'].append((window.index[0], window.index[-1]))
         
@@ -252,41 +241,31 @@ def find_RW(max_min,buffer):
         
     return final
 
-def main(ticker,days=365,SMAs = [30,60],smoothing=10,window=10):
+def main(ticker, events, days=365, SMAs = [30,60], smoothing=10, window=10):
     df = get_ticker(ticker,days)
     df = get_sma(df,SMAs)
     minmax = get_max_min(df, smoothing, window)
-    invhs = find_IHS(minmax).reset_index(drop=True)
-    hs = find_HS(minmax).reset_index(drop=True)
-    fw = find_FW(minmax,.03).reset_index(drop=True)
-    rw = find_RW(minmax,.03).reset_index(drop=True)
+    events_df = {}
+    q1 = '''
+    select
+    p.*'''
+    q2 = '''
+    from prices p'''
+    for event in events:
+        events_df[event] = globals()[event](minmax).reset_index(drop=True)
+        q1 += '\n,ifNULL({}.event,0) as {}'.format(event,event)
+        q2 += '\nleft join {} on \n p.date between {}.start_event and {}.end_event'.format(event,event,event)
+        
     conn = sqlite3.connect(':memory:')
     #write the tables
     df.to_sql('prices', conn, index=False)
-    fw.to_sql('fw', conn, index=False)
-    invhs.to_sql('ihs', conn, index=False)
-    hs.to_sql('hs', conn, index=False)
-    rw.to_sql('rw', conn, index=False)
-    qry = '''
-        select  
-            p.*,
-            ifNULL(f.event,0) as fw_event,
-            ifNULL(r.event,0) as rw_event,
-            ifNULL(i.event,0) as ihs_event,
-            ifNULL(h.event,0) as hs_event
-        from
-            prices p left join fw f on
-            p.date between f.start_event and f.end_event 
-        left join rw r on
-            p.date between r.start_event and r.end_event
-        left join ihs i on
-            p.date between i.start_event and i.end_event
-        left join hs h on
-            p.date between h.start_event and h.end_event
-        '''
+    for event in events:
+        events_df[event].to_sql(event, conn, index=False)
+    
+    qry = q1 + q2
     final = pd.read_sql_query(qry, conn)
     
     return final
 
 if __name__ == '__main__':
-    main(ticker,days)
+    main(ticker,events)
