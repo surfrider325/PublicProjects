@@ -21,7 +21,7 @@ import requests
 import lxml
 import sqlite3
 from itertools import chain
-import Indicators
+import Indicators2 as Indicators
 
 def Measure_event(df,events,N=30):
     A = len(events)
