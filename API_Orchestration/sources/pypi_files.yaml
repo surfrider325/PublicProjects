@@ -1,0 +1,32 @@
+# No credentials needed, and it exercises nested paths, timestamp parsing, and
+# a boolean default — useful as a smoke test right after setup:
+#   apiflow run pypi_files --dry-run
+name: pypi_files
+description: Distribution files for a package on PyPI
+enabled: true
+schedule: "0 3 * * *"           # daily at 03:00 UTC
+
+request:
+  url: https://pypi.org/pypi/${PYPI_PACKAGE:-httpx}/json
+  timeout: 30
+
+pagination:
+  type: none
+
+records_path: urls              # the array lives under the "urls" key
+
+fields:
+  filename:     { path: filename,             type: text, required: true }
+  package_type: { path: packagetype,          type: text }
+  size_bytes:   { path: size,                 type: bigint }
+  uploaded_at:  { path: upload_time_iso_8601, type: timestamp }
+  sha256:       { path: digests.sha256,       type: text }     # nested path
+  yanked:       { path: yanked,               type: bool, default: false }
+  python_req:   { path: requires_python,      type: text }
+
+target:
+  schema: raw
+  table: pypi_files
+  primary_key: [filename]
+  mode: upsert
+  store_raw: true
