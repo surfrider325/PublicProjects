@@ -1,0 +1,32 @@
+# Simplest possible source: one unpaginated endpoint, no auth.
+# Good first target to confirm the pipeline works end to end.
+name: jsonplaceholder_posts
+description: Demo posts from jsonplaceholder.typicode.com
+enabled: true
+schedule: "0 * * * *"          # hourly, on the hour
+
+request:
+  method: GET
+  url: https://jsonplaceholder.typicode.com/posts
+  timeout: 30
+
+auth:
+  type: none
+
+pagination:
+  type: none
+
+records_path: "$"               # the response body IS the array
+
+fields:
+  id:      { path: id,     type: bigint, required: true }
+  user_id: { path: userId, type: bigint }
+  title:   { path: title,  type: text }
+  body:    { path: body,   type: text }
+
+target:
+  schema: raw
+  table: jsonplaceholder_posts
+  primary_key: [id]
+  mode: upsert
+  store_raw: true

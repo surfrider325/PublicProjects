@@ -1,0 +1,105 @@
+# Copy to <your_source>.yaml and edit. Every key with a default is optional.
+# Rename off the .example suffix to activate — apiflow only reads *.yaml / *.yml.
+
+name: my_source                 # lowercase, digits, underscores; must be unique
+description: What this pulls
+enabled: true
+schedule: "0 6 * * *"           # 5-field cron, UTC. Omit to run manually only.
+
+request:
+  method: GET                   # GET | POST
+  url: https://api.example.com/v1/things
+  headers:
+    Accept: application/json
+  params:                       # static query params sent on every page
+    include: details
+  json_body: null               # POST body, if method is POST
+  timeout: 30
+
+auth:
+  # --- pick ONE ---
+  type: none
+
+  # type: bearer
+  # token: ${MY_API_TOKEN}
+  # header: Authorization
+  # prefix: Bearer
+
+  # type: api_key
+  # key: ${MY_API_KEY}
+  # name: X-API-Key
+  # location: header            # header | query
+
+  # type: basic
+  # username: ${MY_USER}
+  # password: ${MY_PASSWORD}
+
+  # type: oauth2_client_credentials
+  # token_url: https://api.example.com/oauth/token
+  # client_id: ${CLIENT_ID}
+  # client_secret: ${CLIENT_SECRET}
+  # scope: read:things
+  # send_credentials_in: body   # body | header
+
+pagination:
+  # --- pick ONE ---
+  type: none
+
+  # type: page                  # ?page=1&per_page=100
+  # page_param: page
+  # size_param: per_page
+  # size: 100
+  # start_page: 1
+  # total_pages_path: meta.total_pages   # optional exact stop condition
+  # max_pages: 1000
+
+  # type: offset                # ?offset=0&limit=100
+  # offset_param: offset
+  # limit_param: limit
+  # limit: 100
+
+  # type: cursor                # next cursor comes back in the body
+  # cursor_path: meta.next_cursor
+  # cursor_param: cursor
+  # size_param: limit
+  # size: 100
+
+  # type: link_header           # Link: <...>; rel="next"
+  # rel: next
+
+retry:
+  max_attempts: 5
+  backoff_seconds: 1
+  backoff_multiplier: 2
+  max_backoff_seconds: 60
+  retry_on_status: [408, 425, 429, 500, 502, 503, 504]
+  respect_retry_after: true
+
+min_request_interval: 0.0       # seconds between requests; raise for strict rate limits
+
+records_path: data.items        # "$" if the body itself is the array
+
+fields:
+  # column_name: { path: <path into one record>, type: <pg type>, required: bool, default: any }
+  # types: text | int | bigint | float | numeric | bool | timestamp | date | json
+  id:         { path: id,              type: bigint, required: true }
+  name:       { path: attributes.name, type: text }
+  price:      { path: price_cents,     type: numeric }
+  is_active:  { path: active,          type: bool, default: false }
+  updated_at: { path: updated_at,      type: timestamp }
+  payload:    { path: "$",             type: json }
+
+incremental:
+  mode: none                    # none | timestamp
+  # field: updated_at           # a column from `fields`
+  # param: updated_since        # the query param the API expects
+  # format: "%Y-%m-%dT%H:%M:%SZ"   # optional; ISO-8601 by default
+  # lookback_seconds: 300
+
+target:
+  schema: raw
+  table: my_source
+  primary_key: [id]             # required when mode is upsert
+  mode: upsert                  # upsert | append | replace
+  store_raw: true               # keep the original JSON in a _raw jsonb column
+  batch_size: 1000

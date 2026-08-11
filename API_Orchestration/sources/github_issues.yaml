@@ -1,0 +1,70 @@
+# A realistic source: token auth, Link-header pagination, nested field paths,
+# and an incremental watermark so each run only pulls what changed.
+#
+# Set GITHUB_TOKEN in .env before enabling. Without it the run still works but
+# hits the 60 req/hour unauthenticated limit.
+name: github_issues
+description: Issues from a GitHub repository, incrementally by updated_at
+enabled: false                  # flip to true once GITHUB_TOKEN is set
+
+schedule: "*/30 * * * *"        # every 30 minutes
+
+request:
+  method: GET
+  url: https://api.github.com/repos/${GITHUB_REPO:-python/cpython}/issues
+  headers:
+    Accept: application/vnd.github+json
+    X-GitHub-Api-Version: "2022-11-28"
+  params:
+    state: all
+    sort: updated
+    direction: asc
+    per_page: 100
+  timeout: 30
+
+auth:
+  type: bearer
+  token: ${GITHUB_TOKEN:-}
+
+pagination:
+  type: link_header
+  rel: next
+  max_pages: 50
+
+# Be polite to the API: at most ~2 requests per second.
+min_request_interval: 0.5
+
+retry:
+  max_attempts: 5
+  backoff_seconds: 2
+  respect_retry_after: true
+
+records_path: "$"
+
+fields:
+  id:            { path: id,               type: bigint, required: true }
+  number:        { path: number,           type: int }
+  title:         { path: title,            type: text }
+  state:         { path: state,            type: text }
+  author:        { path: user.login,       type: text }      # nested path
+  first_label:   { path: "labels[0].name", type: text }      # array index
+  comments:      { path: comments,         type: int }
+  created_at:    { path: created_at,       type: timestamp }
+  updated_at:    { path: updated_at,       type: timestamp }
+  closed_at:     { path: closed_at,        type: timestamp }
+  html_url:      { path: html_url,         type: text }
+  labels:        { path: labels,           type: json }      # keep the whole array
+
+incremental:
+  mode: timestamp
+  field: updated_at             # column tracked as the high-water mark
+  param: since                  # query param the API expects
+  lookback_seconds: 300         # re-fetch 5 minutes of overlap
+
+target:
+  schema: raw
+  table: github_issues
+  primary_key: [id]
+  mode: upsert
+  store_raw: true
+  batch_size: 500
