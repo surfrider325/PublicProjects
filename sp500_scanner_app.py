@@ -3,6 +3,10 @@ import torch
 import torch.nn as nn
 import numpy as np
 import yfinance as yf
+
+# Local Massive Parquet store; yfinance-compatible download() that falls back
+# to yfinance for any ticker the store doesn't hold.
+import massive_feed
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
@@ -85,14 +89,14 @@ def get_sp500_tickers():
 
 @st.cache_data(ttl=900)
 def fetch_prices(ticker):
-    df = yf.download(ticker, period="3mo", auto_adjust=True, progress=False)
+    df = massive_feed.download(ticker, period="3mo", auto_adjust=True, progress=False)
     if hasattr(df.columns, "levels"):
         df.columns = [c[0] for c in df.columns]
     return df if len(df) >= WINDOW else None
 
 @st.cache_data(ttl=900)
 def fetch_prices_1y(ticker):
-    df = yf.download(ticker, period="1y", auto_adjust=True, progress=False)
+    df = massive_feed.download(ticker, period="1y", auto_adjust=True, progress=False)
     if hasattr(df.columns, "levels"):
         df.columns = [c[0] for c in df.columns]
     return df if len(df) >= WINDOW else None
