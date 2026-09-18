@@ -9,6 +9,10 @@ Dependencies:
 
 import streamlit as st
 import yfinance as yf
+
+# Local Massive Parquet store; yfinance-compatible download() that falls back
+# to yfinance for any ticker the store doesn't hold.
+import massive_feed
 import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
@@ -46,7 +50,7 @@ SP500_TICKERS = [
 # ─────────────────────────────────────────────
 @st.cache_data(ttl=300)
 def fetch_data(ticker: str, period: str = "1y") -> pd.DataFrame:
-    df = yf.download(ticker, period=period, auto_adjust=True, progress=False)
+    df = massive_feed.download(ticker, period=period, auto_adjust=True, progress=False)
     if df.empty:
         return df
     df.columns = [c[0] if isinstance(c, tuple) else c for c in df.columns]
